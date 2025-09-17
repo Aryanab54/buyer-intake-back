@@ -10,6 +10,106 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  name         String?
+  password     String?  
+  role         String         @default("user")
+  buyers       Buyer[]        @relation("OwnerBuyers")
+  buyerChanges BuyerHistory[] @relation("UserChanges")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Buyer {
+  id           String    @id @default(uuid())
+  fullName     String
+  email        String? 
+  phone        String
+  city         City
+  propertyType PropertyType
+  bhk          Bhk?
+  purpose      Purpose
+  budgetMin    Int?
+  budgetMax    Int?
+  timeline     Timeline
+  source       Source
+  status       Status    @default(NEW)
+  notes        String?   @db.Text
+  tags         Json      @default("[]")
+  owner        User      @relation(fields: [ownerId], references: [id], name: "OwnerBuyers")
+  ownerId      String
+  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime  @default(now())
+  histories    BuyerHistory[] @relation("BuyerHistories")
+}
+
+model BuyerHistory {
+  id          String   @id @default(uuid())
+  buyer       Buyer    @relation(fields: [buyerId], references: [id], name: "BuyerHistories")
+  buyerId     String
+  changedBy   User     @relation(fields: [changedById], references: [id], name: "UserChanges")
+  changedById String
+  changedAt   DateTime @default(now())
+  diff        Json
+}
+
+enum City {
+  Chandigarh
+  Mohali
+  Zirakpur
+  Panchkula
+  Other
+}
+
+enum PropertyType {
+  Apartment
+  Villa
+  Plot
+  Office
+  Retail
+}
+
+enum Bhk {
+  Studio
+  ONE
+  TWO
+  THREE
+  FOUR
+}
+
+enum Purpose {
+  Buy
+  Rent
+}
+
+enum Timeline {
+  ZERO_TO_THREE_MONTHS
+  THREE_TO_SIX_MONTHS
+  MORE_THAN_SIX_MONTHS
+  Exploring
+}
+
+enum Source {
+  Website
+  Referral
+  Walk_in
+  Call
+  Other
+}
+
+enum Status {
+  NEW
+  Qualified
+  Contacted
+  Visited
+  Negotiation
+  Converted
+  Dropped
 }
